@@ -75,11 +75,11 @@ const Snake = () => {
   const [snake, setSnake] = useState(getDefaultSnake());
   const [direction, setDirection] = useState(Direction.Right);
 
-  const [food, setFood] = useState({ x: 4, y: 10 });
+  const [food, setFood] = useState([{ x: 4, y: 10 }]);
   const [score, setScore] = useState(0);
 
 
-  console.log(snake[0]);
+
   
   // move the snake
   useEffect(() => {
@@ -93,10 +93,10 @@ const Snake = () => {
         
         tails.shift();
         let newHead = { x: head.x + direction.x, y: head.y + direction.y };
-        if(newHead.x > Config.width) newHead = { x: 0, y: newHead.y }
-        if(newHead.x < 0) newHead = { x: Config.width, y: newHead.y }
-        if(newHead.y > Config.height) newHead = { x: newHead.x, y: 0 }
-        if(newHead.y < 0) newHead = { x: newHead.x, y: Config.width }
+        if(newHead.x > Config.width - 1) newHead = { x: 0, y: newHead.y }
+        if(newHead.x < 0) newHead = { x: Config.width - 1, y: newHead.y }
+        if(newHead.y > Config.height - 1) newHead = { x: newHead.x, y: 0 }
+        if(newHead.y < 0) newHead = { x: newHead.x, y: Config.width - 1 }
         
         // make a new snake by extending head
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
@@ -104,6 +104,7 @@ const Snake = () => {
         
         // remove tail
         newSnake.pop();
+
 
         // check if snake head is equal to it's any tail
         if(tails.find(tail => tail.x === newHead.x && tail.y === newHead.y)){
@@ -115,7 +116,7 @@ const Snake = () => {
             newFood = getRandomCell();
           }
     
-          setFood(newFood);
+          setFood([...newFood]);
           return getDefaultSnake()
         } else {
           return newSnake;
@@ -148,7 +149,7 @@ const Snake = () => {
         newFood = getRandomCell();
       }
 
-      setFood(newFood);
+      setFood([{x: newFood.x, y: newFood.y}]);
 
       // increase snake size by adding tails
       setSnake((prevSnake) =>{
@@ -160,6 +161,44 @@ const Snake = () => {
       } )
     }
   }, [snake]);
+
+  // console.log(food);
+  //udate food in every 3 seconds
+  useEffect(() => {
+    const genFood = () => {
+      let newFood = getRandomCell();
+      while (isSnake(newFood)) {
+        newFood = getRandomCell();
+      }
+
+      setFood((prevFood) => [...prevFood, {x: newFood.x , y: newFood.y}]);
+      
+    }
+    genFood(); 
+    const timer = setInterval(genFood, 3000);
+
+    
+    return () => {
+      clearInterval(timer)
+    }
+    
+    
+  }, [])
+
+
+    // setInterval(() => {
+    //   setFood((prevFood) => {
+        
+    //     const newFood = prevFood.pop()
+    //     console.log(newFood);
+    //     return [{x: 11, y:17}]
+    //   })
+    // }, 10000);
+
+ 
+
+  
+
 
   useEffect(() => {
     const handleNavigation = (event) => {
@@ -229,7 +268,7 @@ const Snake = () => {
 
   // ?. is called optional chaining
   // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
-  const isFood = ({ x, y }) => food?.x === x && food?.y === y;
+  const isFood = ({ x, y }) => food?.find(food => food.x === x && food.y === y);
 
   const isSnake = ({ x, y }) =>
     snake.find((position) => position.x === x && position.y === y);
