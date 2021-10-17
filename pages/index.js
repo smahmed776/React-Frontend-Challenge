@@ -78,31 +78,64 @@ const Snake = () => {
   const [food, setFood] = useState({ x: 4, y: 10 });
   const [score, setScore] = useState(0);
 
+
+  console.log(snake[0]);
+  
   // move the snake
   useEffect(() => {
     const runSingleStep = () => {
       setSnake((snake) => {
         const head = snake[0];
-        const newHead = { x: head.x + direction.x, y: head.y + direction.y };
-
+        
+        const tails = [
+          ...snake
+        ]
+        
+        tails.shift();
+        let newHead = { x: head.x + direction.x, y: head.y + direction.y };
+        if(newHead.x > Config.width) newHead = { x: 0, y: newHead.y }
+        if(newHead.x < 0) newHead = { x: Config.width, y: newHead.y }
+        if(newHead.y > Config.height) newHead = { x: newHead.x, y: 0 }
+        if(newHead.y < 0) newHead = { x: newHead.x, y: Config.width }
+        
         // make a new snake by extending head
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
         const newSnake = [newHead, ...snake];
-
+        
         // remove tail
         newSnake.pop();
 
-        return newSnake;
+        // check if snake head is equal to it's any tail
+        if(tails.find(tail => tail.x === newHead.x && tail.y === newHead.y)){
+          alert("Game over")
+          setScore(0)
+          setDirection(Direction.Right)
+          let newFood = getRandomCell();
+          while (isSnake(newFood)) {
+            newFood = getRandomCell();
+          }
+    
+          setFood(newFood);
+          return getDefaultSnake()
+        } else {
+          return newSnake;
+        }
+
+
       });
+      
+
     };
 
     runSingleStep();
-    const timer = setInterval(runSingleStep, 500);
+    const timer = setInterval(runSingleStep, 400);
 
     return () => clearInterval(timer);
   }, [direction, food]);
 
-  // update score whenever head touches a food
+  
+
+  // update score and snake tail whenever head touches a food
   useEffect(() => {
     const head = snake[0];
     if (isFood(head)) {
@@ -116,6 +149,15 @@ const Snake = () => {
       }
 
       setFood(newFood);
+
+      // increase snake size by adding tails
+      setSnake((prevSnake) =>{
+        return [
+          ...prevSnake, {
+            x: prevSnake.at(-1).x + direction.x, y: prevSnake.at(-1).y + direction.y
+          }
+        ]
+      } )
     }
   }, [snake]);
 
@@ -123,19 +165,60 @@ const Snake = () => {
     const handleNavigation = (event) => {
       switch (event.key) {
         case "ArrowUp":
-          setDirection(Direction.Top);
-          break;
+          
+          setDirection((prevDirection)=> {
+            if(prevDirection.x === Direction.Bottom.x && prevDirection.y === Direction.Bottom.y){
+              return prevDirection;
+            } else {
+              return {
+                x: Direction.Top.x,
+                y: Direction.Top.y
+              }
+            }
+          });
 
-        case "ArrowDown":
-          setDirection(Direction.Bottom);
           break;
-
-        case "ArrowLeft":
-          setDirection(Direction.Left);
-          break;
-
-        case "ArrowRight":
-          setDirection(Direction.Right);
+          
+          case "ArrowDown":
+            setDirection((prevDirection)=> {
+              if(prevDirection.x === Direction.Top.x && prevDirection.y === Direction.Top.y){
+                return prevDirection;
+              } else {
+                return {
+                  x: Direction.Bottom.x,
+                  y: Direction.Bottom.y
+                }
+              }
+            });
+     
+            break;
+            
+            case "ArrowLeft":
+              setDirection((prevDirection)=> {
+                if(prevDirection.x === Direction.Right.x && prevDirection.y === Direction.Right.y){
+                  return prevDirection;
+                } else {
+                  return {
+                    x: Direction.Left.x,
+                    y: Direction.Left.y
+                  }
+                }
+              });
+              
+              break;
+              
+              case "ArrowRight":
+                setDirection((prevDirection)=> {
+                  if(prevDirection.x === Direction.Left.x && prevDirection.y === Direction.Left.y){
+                    return prevDirection;
+                  } else {
+                    return {
+                      x: Direction.Right.x,
+                      y: Direction.Right.y
+                    }
+                  }
+                });
+                
           break;
       }
     };
@@ -163,7 +246,7 @@ const Snake = () => {
       cells.push(<Cell key={`${x}-${y}`} x={x} y={y} type={type} />);
     }
   }
-
+  
   return (
     <div className={styles.container}>
       <div
